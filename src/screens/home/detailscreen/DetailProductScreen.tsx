@@ -51,7 +51,7 @@ const DetailProductScreen = ({ route, navigation }: any) => {
                 },
                 'post',
             );
-            navigation.navigate('Giỏ Hàng')
+            navigation.navigate('Giỏ Hàng', { data: [id,idProduct] })
 
 
         } catch (error) {
