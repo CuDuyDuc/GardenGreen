@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Image, StyleProp, View, ViewStyle } from 'react-native';
 import { ButtonComponent, RowComponent, TextComponent } from '.';
 import { FONTFAMILY } from '../../assets/fonts';
 import COLORS from '../assets/colors/Colors';
 import { globalStyle } from '../styles/globalStyle';
+import { carts } from '../models/carts';
+import cartAPI from '../apis/cartAPI';
 
 interface Props {
     id: number,
@@ -15,23 +17,24 @@ interface Props {
     quantity?: string,
     checkCartItem: boolean,
     onPressPlus?: () => void
+    onPressMinus?: () => void
     styles?: StyleProp<ViewStyle>
 
 }
 const PlantCard = (props: Props) => {
-    const { id, image, name, origin, size, price, quantity, checkCartItem, onPressPlus, styles } = props
+    const { id, image, name, origin, size, price, quantity, checkCartItem, onPressPlus, styles, onPressMinus } = props
 
     return (
         <View style={styles}>
             <RowComponent justify='space-between' styles={{ flexDirection: (checkCartItem ? 'row' : 'column') }}>
-                {!checkCartItem?<Image style={{ width: 150, height: 130 }} src={image} />:<Image style={{ width: 120, height: 130 }} src={image} />}
+                {!checkCartItem ? <Image style={{ width: 150, height: 130 }} src={image} /> : <Image style={{ width: 120, height: 130 }} src={image} />}
                 <View style={{ marginStart: 10, maxWidth: 200 }} >
                     <TextComponent text={name} color={COLORS.BLACK} size={13} />
                     <TextComponent text={origin} color={COLORS.HEX_LIGHT_GREY} size={9} />
                     <RowComponent justify='space-between'>
                         <View>
-                            {checkCartItem ? (<TextComponent text={size} font={FONTFAMILY.poppins_bold}  styles={{
-                                width: 90,
+                            {checkCartItem ? (<TextComponent text={size} font={FONTFAMILY.poppins_bold} styles={{
+                                width: 70,
                                 height: 40,
                                 backgroundColor: COLORS.GREEN,
                                 borderRadius: 10,
@@ -50,7 +53,7 @@ const PlantCard = (props: Props) => {
                     <View style={{ marginTop: 5 }}>
                         <RowComponent justify='space-between'>
                             {checkCartItem ? (
-                                <ButtonComponent styles={{ width: 35, height: 35 }} text='-' type='#009245' textStyles={{ fontSize: 16 }} />
+                                <ButtonComponent styles={{ width: 35, height: 35 }} onPress={onPressMinus} text='-' type='#009245' textStyles={{ fontSize: 16 }} />
                             ) : <View style={{ flexDirection: 'row', marginEnd: 5 }}>
                                 <TextComponent text={price} font={FONTFAMILY.poppins_regular} color={COLORS.BLACK} size={14} />
                                 <TextComponent text='VNĐ' font={FONTFAMILY.poppins_regular} color={COLORS.GREEN} size={14} />
@@ -65,7 +68,7 @@ const PlantCard = (props: Props) => {
                                     lineHeight: 30,
                                     marginEnd: 10,
                                     borderColor: COLORS.GREEN,
-                                    
+
                                 }} />
                             ) : <View></View>}
                             <ButtonComponent
@@ -87,7 +90,7 @@ const CardColumnItemComponent = ({ checkCartItem, data, navigation }: { checkCar
             renderItem={({ item }) => (
                 <PlantCard
                     id={item.id}
-                    styles={[globalStyle.shadowCard,{margin:5, borderRadius:25,padding:10}]}
+                    styles={[globalStyle.shadowCard, { margin: 5, borderRadius: 25, padding: 10 }]}
                     checkCartItem={checkCartItem}
                     image={item.image[0]}
                     name={item.name}
@@ -102,7 +105,46 @@ const CardColumnItemComponent = ({ checkCartItem, data, navigation }: { checkCar
         />
     );
 };
-const CardRowItemComponent = ({ checkCartItem, data}: { checkCartItem: boolean; data: any[];  }) => {
+const CardRowItemComponent = ({ checkCartItem, data }: { checkCartItem: boolean; data: any[] }) => {
+    const updateData = async (data: carts, check: boolean) => {
+        const api = `/update-cart/${data._id}`
+        try {
+            const res = await cartAPI.HandleCart(
+                api,
+                {
+                    quantity: check ? data.quantity + 1 : data.quantity - 1,
+                    price_product: check ? data.id_product.price * (data.quantity + 1) : data.id_product.price * (data.quantity - 1)
+                },
+                'put',
+            );
+
+        } catch (error) {
+
+        }
+    }
+    const deleteData = async (data: carts) => {
+        const api = `/delete-cart/${data._id}`
+        try {
+            const res = await cartAPI.HandleCart(
+                api,
+                {},
+                'delete',
+            );
+
+        } catch (error) {
+
+        }
+    }
+    const handlePlus = async (data: carts) => {
+        updateData(data,true)
+    }
+    const handleMinus = async (data: carts) => {
+        if(data.quantity>1){
+            updateData(data,false)
+        }else{
+            deleteData(data)
+        }
+    }
     return (
         <FlatList
             data={data}
@@ -112,14 +154,16 @@ const CardRowItemComponent = ({ checkCartItem, data}: { checkCartItem: boolean; 
             renderItem={({ item }) => (
                 <PlantCard
                     id={item.id}
-                    styles={[globalStyle.shadowCard,{margin:5, borderRadius:25,padding:10}]}
+                    styles={[globalStyle.shadowCard, { margin: 5, borderRadius: 25, padding: 10 }]}
                     checkCartItem={checkCartItem}
-                    image={item.image}
-                    name={item.name}
-                    origin={item.origin}
+                    image={item.id_product.image[0]}
+                    name={item.id_product.name}
+                    origin={item.id_product.origin}
                     quantity={item.quantity}
-                    price={item.price}
-                    size={item.size}
+                    price={item.price_product}
+                    size={item.id_product.size}
+                    onPressMinus={() => handleMinus(item)}
+                    onPressPlus={() => handlePlus(item)}
                 />
             )}
             style={{ alignSelf: 'center' }}
@@ -128,4 +172,4 @@ const CardRowItemComponent = ({ checkCartItem, data}: { checkCartItem: boolean; 
 };
 
 
-export { CardColumnItemComponent,CardRowItemComponent}
+export { CardColumnItemComponent, CardRowItemComponent }

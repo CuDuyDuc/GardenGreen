@@ -47,11 +47,11 @@ const DetailProductScreen = ({ route, navigation }: any) => {
                     id_product: idProduct,
                     id_user: id,
                     quantity: quantity,
-                    provisional_price: quantity*price
+                    price_product:price*quantity
                 },
                 'post',
             );
-            navigation.navigate('Giỏ Hàng', { data: [id,idProduct] })
+            navigation.navigate('Giỏ Hàng', { dataCart: [id,idProduct] })
 
 
         } catch (error) {

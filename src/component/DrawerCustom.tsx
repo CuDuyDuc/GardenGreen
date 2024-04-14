@@ -1,14 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, StatusBar } from 'react-native'
-import React from 'react'
-import { Platform } from 'react-native'
-import { useDispatch, useSelector } from 'react-redux';
-import { authSelector, removeAuth } from '../redux/reducers/authReducer';
-import COLORS from '../assets/colors/Colors';
-import { Bookmark2, Calendar, Logout, Message2, MessageQuestion, Setting2, Sms, User } from 'iconsax-react-native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import TextComponent from './TextComponent';
+import { Calendar, Logout, Message2, MessageQuestion, Setting2, Sms, User } from 'iconsax-react-native';
+import React from 'react';
+import { FlatList, Image, Platform, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import COLORS from '../assets/colors/Colors';
+import { authSelector, removeAuth } from '../redux/reducers/authReducer';
 import RowComponent from './RowComponent';
+import TextComponent from './TextComponent';
 
 const DrawerCustom = ({ navigation }: any) => {
     const user = useSelector(authSelector);
@@ -53,10 +51,30 @@ const DrawerCustom = ({ navigation }: any) => {
         },
     ];
 
+    const handleNavigation = (key: string) => {
+        switch (key) {
+            case 'SignOut':
+                handleSignOut();
+                break;
+            case 'MyProfile':
+                navigation.navigate('Profile', {
+                    screen: 'ProfileScreen',
+                    params: {
+                        id: user.id,
+                    },
+                });
+                break;
+            default:
+                console.log(key);
+                break;
+        }
+
+        navigation.closeDrawer();
+    };
+
     const handleSignOut = async () => {
         await GoogleSignin.signOut();
         dispatch(removeAuth({}));
-        await AsyncStorage.clear();
     };
 
     return (
@@ -64,10 +82,6 @@ const DrawerCustom = ({ navigation }: any) => {
             <TouchableOpacity
                 onPress={() => {
                     navigation.closeDrawer();
-
-                    navigation.navigate('Profile', {
-                        screen: 'ProfileScreen',
-                    });
                 }}>
                 {user.photo ? (
                     <Image source={{ uri: user.photo }} style={[styles.avatar]} />
@@ -88,7 +102,7 @@ const DrawerCustom = ({ navigation }: any) => {
                         />
                     </View>
                 )}
-                <TextComponent text={user.name} title size={18} color={COLORS.HEX_LIGHT_GRAY} />
+                <TextComponent text={user.name ? user.name : user.email} title size={18} color={COLORS.HEX_LIGHT_GRAY} />
             </TouchableOpacity>
             <FlatList
                 showsVerticalScrollIndicator={false}
@@ -99,14 +113,7 @@ const DrawerCustom = ({ navigation }: any) => {
                         styles={[styles.listItem]}
                     >
                         {item.icon}
-                        <TouchableOpacity onPress={
-                            item.key === 'SignOut'
-                                ? () => handleSignOut()
-                                : () => {
-                                    console.log(item.key);
-                                    navigation.closeDrawer();
-                                }
-                        }>
+                        <TouchableOpacity onPress={() => handleNavigation(item.key)}>
                             <TextComponent
                                 text={item.title}
                                 styles={styles.listItemText}
