@@ -65,18 +65,7 @@ const HomeScreen = ({ navigation }: any) => {
           size={25} />
       </SectionComponent>
       <SectionComponent>
-        <CardColumnItemComponent navigation={navigation} checkCartItem={false} data={product} />
-      </SectionComponent>
-      <SectionComponent styles={{ marginTop: 20 }}>
-        <ButtonComponent
-          text='logout'
-          type='#009245'
-          onPress={async () => {
-            await GoogleSignin.signOut();
-            await AsyncStorage.clear();
-            dispatch(removeAuth({}));
-          }}
-        />
+        <CardColumnItemComponent navigation={navigation} checkCartItem={false} products={product} />
       </SectionComponent>
     </ContainerComponent>
   )

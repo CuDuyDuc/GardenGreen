@@ -29,12 +29,14 @@ const DetailProductScreen = ({ route, navigation }: any) => {
     const dataArray = data[0];
     const itemId = data[1];
 
-    useEffect(() => {//khi render stack thì tự động set data và set id và trả về dataProduct, idProduct,sizeData
+    useEffect(() => {
         const fetchData = () => {
             setData(dataArray);
             setIDproduct(itemId);
             handleData();
         };
+        console.log(data);
+        
 
         fetchData();
     }, [dataProduct, idProduct]);
@@ -51,6 +53,8 @@ const DetailProductScreen = ({ route, navigation }: any) => {
                 },
                 'post',
             );
+            console.log(id);
+            
             navigation.navigate('Giỏ Hàng', { dataCart: [id,idProduct] })
 
 

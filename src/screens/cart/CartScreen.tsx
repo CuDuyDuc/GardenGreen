@@ -27,9 +27,11 @@ const CartScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     getDataCart()
     let total = 0;
-    cart.forEach(item => {
-      total += item.price_product;
-    });
+    if(cart!=null){
+      cart.forEach(item => {
+        total += item.price_product;
+      });
+    }
     setprovisionalPrice(total);
   }, [cart]);
 

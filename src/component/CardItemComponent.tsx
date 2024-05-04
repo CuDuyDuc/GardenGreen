@@ -6,6 +6,7 @@ import COLORS from '../assets/colors/Colors';
 import { globalStyle } from '../styles/globalStyle';
 import { carts } from '../models/carts';
 import cartAPI from '../apis/cartAPI';
+import { products } from './../models/products';
 
 interface Props {
     id: number,
@@ -81,11 +82,11 @@ const PlantCard = (props: Props) => {
         </View>
     )
 }
-const CardColumnItemComponent = ({ checkCartItem, data, navigation }: { checkCartItem: boolean; data: any[]; navigation: any }) => {
+const CardColumnItemComponent = ({ checkCartItem, products, navigation }: { checkCartItem: boolean; products: any[]; navigation: any }) => {
 
     return (
         <FlatList
-            data={data}
+            data={products}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
                 <PlantCard
@@ -96,7 +97,7 @@ const CardColumnItemComponent = ({ checkCartItem, data, navigation }: { checkCar
                     name={item.name}
                     origin={item.origin}
                     price={item.price}
-                    onPressPlus={() => navigation.navigate('DetailProductScreen', { data: [data, item._id] })}
+                    onPressPlus={() => navigation.navigate('DetailProductScreen', { data: [products, item._id] })}
                 />
             )}
             style={{ alignSelf: 'center' }}

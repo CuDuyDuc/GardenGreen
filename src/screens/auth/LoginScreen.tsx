@@ -13,6 +13,8 @@ import authenticationAPI from '../../apis/authAPI';
 import { Validate } from '../../utils/validate';
 import { useDispatch } from 'react-redux';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { LoginManager, Profile, Settings } from 'react-native-fbsdk-next';
+import { LoadingModal } from '../../modal';
 GoogleSignin.configure({
     webClientId: '589288383092-7g4svk811791g85c9k5946l0cdards3o.apps.googleusercontent.com',
 });
@@ -23,7 +25,9 @@ const LoginScreen = ({ navigation }: any) => {
     const [password, setPassword] = useState('');
     const [isRemember, setIsRemember] = useState(true);
     const [isDisable, setIsDisable] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const dispatch = useDispatch();
+    Settings.setAppID('954208399512132');
 
     useEffect(() => {
         const emailValidation = Validate.email(email);
@@ -34,6 +38,46 @@ const LoginScreen = ({ navigation }: any) => {
             setIsDisable(false);
         }
     }, [email, password]);
+    const handleLoginWithFacebook = async () => {
+        const api = '/signInWithGoogle';
+        try {
+            const result = await LoginManager.logInWithPermissions([
+                'public_profile',
+            ]);
+
+            if (result.isCancelled) {
+                console.log('Login cancel');
+            } else {
+                const profile = await Profile.getCurrentProfile();
+
+                if (profile) {
+                    setIsLoading(true);
+                    const data = {
+                        name: profile.name,
+                        givenName: profile.firstName,
+                        familyName: profile.lastName,
+                        email: profile.userID, // vì khi lấy thông tin của ng dùng trên fb thì không có email nên lấy userID làm thế
+                        // mục đích để khi người dùng đăng nhập lại thì mình biết nó đã tồn tại hay chưa và nó biết để cập nhật hoặc tạo mới.
+                        photo: profile.imageURL,
+                    };
+
+                    const res: any = await authenticationAPI.HandleAuthentication(
+                        api,
+                        data,
+                        'post',
+                    );
+
+                    dispatch(addAuth(res.data));
+
+                    await AsyncStorage.setItem('auth', JSON.stringify(res.data));
+
+                    setIsLoading(false);
+                }
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
     const handleLogin = async () => {
 
@@ -80,101 +124,105 @@ const LoginScreen = ({ navigation }: any) => {
     }
 
     return (
-        <KeyboardAvoidingWrapper>
-            <SectionComponent
-                styles={{
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    marginTop: -250
-                }}>
-                <Image
-                    source={IMAGES.LoginBackgroud}
-                    style={{ marginBottom: 10 }} />
-            </SectionComponent>
-            <SectionComponent>
-                <TextComponent
-                    title
-                    text='Đăng Nhập'
-                    size={45}
-                    color={COLORS.BLACK}
-                    font={FONTFAMILY.poppins_bold}
-                    styles={{ marginBottom: 20, marginTop: -20 }} />
-                <InputComponent
-                    value={email}
-                    placeholder='Email'
-                    onChange={val => setEmail(val)}
-                    allowClear
-                    affix={<Sms size={22} color={COLORS.HEX_LIGHT_GREY} />} />
-                <InputComponent
-                    value={password}
-                    placeholder='Mật khẩu'
-                    onChange={val => setPassword(val)}
-                    isPassword
-                    affix={<Lock size={22} color={COLORS.HEX_LIGHT_GREY} />} />
-            </SectionComponent>
-            <SectionComponent>
-                <RowComponent justify='space-between'>
-                    <RowComponent onPress={() => setIsRemember(!isRemember)}>
-                        <Switch
-                            trackColor={{ false: COLORS.WHITE, true: COLORS.GREEN }}
-                            thumbColor={isRemember ? COLORS.WHITE : COLORS.GREEN}
-                            value={isRemember}
-                            onChange={() => setIsRemember(!isRemember)} />
-                        <TextComponent text='Ghi nhớ tài khoản' color={COLORS.BLACK} />
-                    </RowComponent>
-                    <ButtonComponent
-                        text='Quên mật khẩu?'
-                        onPress={() => navigation.navigate('ForgotPassWord')}
-                        type="link" />
-                </RowComponent>
-            </SectionComponent>
-            <SectionComponent styles={{ marginTop: 20 }}>
-                <ButtonComponent
-                    disable={isDisable}
-                    text='ĐĂNG NHẬP'
-                    type='#009245'
-                    onPress={handleLogin}
-                />
-            </SectionComponent>
-            <SectionComponent>
-                <TextComponent
-                    text='Đăng nhập với'
-                    color={COLORS.HEX_LIGHT_GREY}
+        <>
+            <KeyboardAvoidingWrapper>
+                <SectionComponent
                     styles={{
-                        textAlign: 'center',
-                        fontSize: 16,
-                        fontFamily: FONTFAMILY.poppins_medium,
-                        marginBottom: 10
-                    }} />
-                <RowComponent>
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginTop: -250
+                    }}>
+                    <Image
+                        source={IMAGES.LoginBackgroud}
+                        style={{ marginBottom: 10 }} />
+                </SectionComponent>
+                <SectionComponent>
+                    <TextComponent
+                        title
+                        text='Đăng Nhập'
+                        size={45}
+                        color={COLORS.BLACK}
+                        font={FONTFAMILY.poppins_bold}
+                        styles={{ marginBottom: 20, marginTop: -20 }} />
+                    <InputComponent
+                        value={email}
+                        placeholder='Email'
+                        onChange={val => setEmail(val)}
+                        allowClear
+                        affix={<Sms size={22} color={COLORS.HEX_LIGHT_GREY} />} />
+                    <InputComponent
+                        value={password}
+                        placeholder='Mật khẩu'
+                        onChange={val => setPassword(val)}
+                        isPassword
+                        affix={<Lock size={22} color={COLORS.HEX_LIGHT_GREY} />} />
+                </SectionComponent>
+                <SectionComponent>
+                    <RowComponent justify='space-between'>
+                        <RowComponent onPress={() => setIsRemember(!isRemember)}>
+                            <Switch
+                                trackColor={{ false: COLORS.WHITE, true: COLORS.GREEN }}
+                                thumbColor={isRemember ? COLORS.WHITE : COLORS.GREEN}
+                                value={isRemember}
+                                onChange={() => setIsRemember(!isRemember)} />
+                            <TextComponent text='Ghi nhớ tài khoản' color={COLORS.BLACK} />
+                        </RowComponent>
+                        <ButtonComponent
+                            text='Quên mật khẩu?'
+                            onPress={() => navigation.navigate('ForgotPassWord')}
+                            type="link" />
+                    </RowComponent>
+                </SectionComponent>
+                <SectionComponent styles={{ marginTop: 20 }}>
                     <ButtonComponent
-                        text='Google'
-                        iconFlex='left'
+                        disable={isDisable}
+                        text='ĐĂNG NHẬP'
                         type='#009245'
-                        styles={globalStyle.shadow}
-                        textColor={COLORS.HEX_LIGHT_GREY}
-                        onPress={handleLoginWithGoogle}
-                        icon={<Google />}
+                        onPress={handleLogin}
                     />
-                    <ButtonComponent
-                        text='Facebook'
-                        iconFlex='left'
-                        type='#009245'
-                        styles={globalStyle.shadow}
-                        textColor={COLORS.HEX_LIGHT_GREY}
-                        icon={<Facebook />} />
+                </SectionComponent>
+                <SectionComponent>
+                    <TextComponent
+                        text='Đăng nhập với'
+                        color={COLORS.HEX_LIGHT_GREY}
+                        styles={{
+                            textAlign: 'center',
+                            fontSize: 16,
+                            fontFamily: FONTFAMILY.poppins_medium,
+                            marginBottom: 10
+                        }} />
+                    <RowComponent>
+                        <ButtonComponent
+                            text='Google'
+                            iconFlex='left'
+                            type='#009245'
+                            styles={globalStyle.shadow}
+                            textColor={COLORS.HEX_LIGHT_GREY}
+                            onPress={handleLoginWithGoogle}
+                            icon={<Google />}
+                        />
+                        <ButtonComponent
+                            text='Facebook'
+                            iconFlex='left'
+                            type='#009245'
+                            styles={globalStyle.shadow}
+                            textColor={COLORS.HEX_LIGHT_GREY}
+                            icon={<Facebook />} 
+                            onPress={handleLoginWithFacebook}/>
 
-                </RowComponent>
-            </SectionComponent>
-            <SectionComponent>
-                <RowComponent justify='center'>
-                    <TextComponent text="Bạn chưa có tài khoản?  " color={COLORS.BLACK} />
-                    <ButtonComponent type='link' text='Đăng ký' onPress={() => {
-                        navigation.navigate('SignUpScreen')
-                    }} />
-                </RowComponent>
-            </SectionComponent>
-        </KeyboardAvoidingWrapper>
+                    </RowComponent>
+                </SectionComponent>
+                <SectionComponent>
+                    <RowComponent justify='center'>
+                        <TextComponent text="Bạn chưa có tài khoản?  " color={COLORS.BLACK} />
+                        <ButtonComponent type='link' text='Đăng ký' onPress={() => {
+                            navigation.navigate('SignUpScreen')
+                        }} />
+                    </RowComponent>
+                </SectionComponent>
+            </KeyboardAvoidingWrapper>
+            <LoadingModal visible={isLoading} />
+        </>
     )
 }
 
